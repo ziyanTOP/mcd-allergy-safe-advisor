@@ -1,0 +1,371 @@
+{
+  "$schema_version": "1.0.0",
+  "market": "CN",
+  "locale": "zh-CN",
+  "updated_at": "2026-10-23",
+  "disclaimer": "本知识库为独立开发者依据公开产品信息整理，非麦当劳官方数据，不构成医疗、营养或过敏诊疗建议。配方与门店实际制作可能因批次、门店、季节性限定而变化，任何情况下必须以门店现场与官方渠道为准。严重过敏者请自行携带急救药物。",
+  "cross_contact_policy": {
+    "general": "麦当劳采用共用烤架、炸锅、面包机与操作台，交叉接触风险真实存在。",
+    "shared_fryer": ["fish", "wheat", "milk", "egg"],
+    "shared_toaster": ["sesame", "wheat", "soy"],
+    "shared_grill": ["milk", "egg", "soy"],
+    "notes": [
+      "中国区薯条使用棕榈油且配方不含小麦与乳制品过敏源（与美国区含小麦/乳的配方不同）。",
+      "即使某单品配料表未列出某过敏原，共用设备仍可能导致接触。",
+      "芝麻风险主要来自巨无霸/巨无霸套餐面包；普通面包与芝麻面包共用烤面包机。"
+    ]
+  },
+  "allergens": [
+    { "key": "wheat", "label": "小麦/麸质", "keywords": ["小麦", "麸质", "面筋", "谷物", "wheat", "gluten"] },
+    { "key": "milk", "label": "乳制品/牛奶", "keywords": ["牛奶", "乳", "奶酪", "芝士", "黄油", "奶油", "奶", "milk", "dairy", "cheese"] },
+    { "key": "egg", "label": "蛋", "keywords": ["蛋", "egg"] },
+    { "key": "soy", "label": "大豆", "keywords": ["大豆", "黄豆", "豆", "soy", "soya"] },
+    { "key": "peanut", "label": "花生", "keywords": ["花生", "peanut"] },
+    { "key": "tree_nut", "label": "坚果", "keywords": ["坚果", "杏仁", "榛子", "核桃", "tree nut", "almond"] },
+    { "key": "fish", "label": "鱼", "keywords": ["鱼", "fish", "鳕鱼"] },
+    { "key": "shellfish", "label": "甲壳类/贝类", "keywords": ["虾", "蟹", "贝", "shellfish", "shrimp"] },
+    { "key": "sesame", "label": "芝麻", "keywords": ["芝麻", "sesame"] },
+    { "key": "mustard", "label": "芥末", "keywords": ["芥末", "mustard"] },
+    { "key": "celery", "label": "芹菜", "keywords": ["芹菜", "celery"] },
+    { "key": "sulphite", "label": "亚硫酸盐", "keywords": ["亚硫酸盐", "sulphite", "sulfite"] }
+  ],
+  "items": [
+    {
+      "name": "巨无霸",
+      "aliases": ["big mac", "bigmac", "巨无霸汉堡", "巨无霸套餐"],
+      "category": "汉堡",
+      "allergens": ["wheat", "milk", "egg", "soy", "sesame"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": {
+        "milk": "去芝士",
+        "egg": "去千岛酱",
+        "sesame": "改用无芝麻面包（需门店确认）",
+        "wheat": "去面包，仅保留牛肉饼（需门店确认）"
+      },
+      "cross_contact": ["wheat", "milk", "sesame"],
+      "confidence": "medium",
+      "notes": "面包含芝麻与大豆；千岛酱含蛋与大豆；芝士含乳。"
+    },
+    {
+      "name": "巨无霸套餐",
+      "aliases": ["big mac meal", "巨无霸超值套餐", "巨无霸薯条套餐"],
+      "category": "套餐",
+      "allergens": ["wheat", "milk", "egg", "soy", "sesame"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": {
+        "milk": "去芝士、去奶昔/热饮换无乳饮料",
+        "egg": "去千岛酱",
+        "sesame": "换无芝麻面包（需确认）",
+        "wheat": "去面包"
+      },
+      "cross_contact": ["wheat", "milk", "sesame", "fish"],
+      "confidence": "medium",
+      "notes": "套餐含薯条；中国区薯条配方本身不含小麦/乳，但共用炸锅带来交叉接触风险。"
+    },
+    {
+      "name": "双层吉士汉堡",
+      "aliases": ["mc double", "mcdouble", "双吉士", "双层芝士汉堡"],
+      "category": "汉堡",
+      "allergens": ["wheat", "milk", "soy"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": { "milk": "去芝士", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk"],
+      "confidence": "medium"
+    },
+    {
+      "name": "吉士汉堡",
+      "aliases": ["cheeseburger", "芝士汉堡"],
+      "category": "汉堡",
+      "allergens": ["wheat", "milk", "soy"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": { "milk": "去芝士", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk"],
+      "confidence": "medium"
+    },
+    {
+      "name": "麦辣鸡腿汉堡",
+      "aliases": ["mcchicken", "麦辣鸡腿", "麦辣鸡腿堡"],
+      "category": "汉堡",
+      "allergens": ["wheat", "egg", "soy"],
+      "may_contain": ["milk", "peanut", "tree_nut"],
+      "removable": { "egg": "去沙拉酱", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium",
+      "notes": "裹粉含小麦与大豆；酱料常含蛋与大豆，部分配方含乳。"
+    },
+    {
+      "name": "板烧鸡腿堡",
+      "aliases": ["板烧鸡腿汉堡", "grilled chicken burger"],
+      "category": "汉堡",
+      "allergens": ["wheat", "egg", "soy"],
+      "may_contain": ["milk", "peanut", "tree_nut"],
+      "removable": { "egg": "去沙拉酱", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    },
+    {
+      "name": "麦香鸡",
+      "aliases": ["chicken mcnuggets burger", "麦香鸡汉堡"],
+      "category": "汉堡",
+      "allergens": ["wheat", "soy"],
+      "may_contain": ["milk", "egg", "peanut", "tree_nut"],
+      "removable": { "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk"],
+      "confidence": "medium"
+    },
+    {
+      "name": "麦香鱼",
+      "aliases": ["filet-o-fish", "filetofish", "深海鳕鱼汉堡"],
+      "category": "汉堡",
+      "allergens": ["wheat", "fish", "milk", "egg", "soy"],
+      "may_contain": ["peanut", "tree_nut", "shellfish"],
+      "removable": { "milk": "去芝士", "egg": "去沙拉酱", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "fish", "egg"],
+      "confidence": "medium",
+      "notes": "含鱼类；同时是共用炸锅中鱼类交叉接触的主要来源。"
+    },
+    {
+      "name": "薯条",
+      "aliases": ["french fries", "fries", "大薯", "中薯", "小薯"],
+      "category": "小食",
+      "allergens": [],
+      "may_contain": [],
+      "removable": {},
+      "cross_contact": ["wheat", "milk", "fish", "egg"],
+      "confidence": "medium",
+      "notes": "中国区薯条配方不含小麦与乳制品过敏源，但通常与裹粉类同油锅炸制，存在交叉接触风险。乳糖不耐受者可安心。",
+      "region_specific": true
+    },
+    {
+      "name": "麦乐鸡",
+      "aliases": ["mcnuggets", "鸡块", "麦乐鸡块", "麦 Nuggets"],
+      "category": "小食",
+      "allergens": ["wheat", "milk", "egg", "soy"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": {},
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium",
+      "notes": "裹粉含小麦、乳与蛋；蘸酱（甜辣/BBQ/沙拉）常含蛋、大豆，部分含乳。"
+    },
+    {
+      "name": "脆薯饼",
+      "aliases": ["hash brown", "薯饼", "脆薯"],
+      "category": "小食",
+      "allergens": ["wheat", "soy"],
+      "may_contain": ["milk", "egg"],
+      "removable": {},
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    },
+    {
+      "name": "洋葱圈",
+      "aliases": ["onion rings"],
+      "category": "小食",
+      "allergens": ["wheat", "milk", "soy"],
+      "may_contain": ["egg"],
+      "removable": {},
+      "cross_contact": ["wheat", "milk"],
+      "confidence": "low",
+      "notes": "部分地区为季节性供应，需以门店实际在售菜单为准。"
+    },
+    {
+      "name": "蔬菜沙拉",
+      "aliases": ["salad", "沙拉"],
+      "category": "小食",
+      "allergens": ["egg"],
+      "may_contain": ["soy", "mustard"],
+      "removable": { "egg": "去沙拉酱/千岛酱，要求只加蔬菜" },
+      "cross_contact": ["wheat", "milk", "soy"],
+      "confidence": "medium",
+      "notes": "蔬菜本身无主要过敏原，风险来自酱料。"
+    },
+    {
+      "name": "猪柳蛋麦满分",
+      "aliases": ["sausage egg mcmuffin", "猪柳蛋麦满分"],
+      "category": "早餐",
+      "allergens": ["wheat", "egg", "milk", "soy"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": { "egg": "去煎蛋", "milk": "去芝士", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    },
+    {
+      "name": "猪柳麦满分",
+      "aliases": ["sausage mcmuffin", "猪柳麦满分"],
+      "category": "早餐",
+      "allergens": ["wheat", "milk", "soy"],
+      "may_contain": ["egg", "peanut", "tree_nut"],
+      "removable": { "milk": "去芝士", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    },
+    {
+      "name": "蛋麦满分",
+      "aliases": ["egg mcmuffin", "吉士蛋麦满分"],
+      "category": "早餐",
+      "allergens": ["wheat", "egg", "milk", "soy"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": { "egg": "去煎蛋", "milk": "去芝士", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    },
+    {
+      "name": "板烧鸡腿麦满分",
+      "aliases": ["grilled chicken mcmuffin"],
+      "category": "早餐",
+      "allergens": ["wheat", "egg", "soy"],
+      "may_contain": ["milk", "peanut", "tree_nut"],
+      "removable": { "egg": "去煎蛋", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    },
+    {
+      "name": "派",
+      "aliases": ["pie", "香辣鸡腿派", "双层吉士派", "红豆派"],
+      "category": "小食",
+      "allergens": ["wheat", "milk"],
+      "may_contain": ["egg", "soy"],
+      "removable": {},
+      "cross_contact": ["wheat", "milk"],
+      "confidence": "medium",
+      "notes": "酥皮含小麦，馅料含乳。不同口味馅料成分不同。"
+    },
+    {
+      "name": "蛋挞",
+      "aliases": ["egg tart", "葡挞", "蛋挞"],
+      "category": "甜品",
+      "allergens": ["wheat", "milk", "egg"],
+      "may_contain": ["soy"],
+      "removable": {},
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    },
+    {
+      "name": "圆筒",
+      "aliases": ["vanilla cone", "甜筒", "冰淇淋甜筒"],
+      "category": "甜品",
+      "allergens": ["milk"],
+      "may_contain": ["soy", "wheat"],
+      "removable": {},
+      "cross_contact": ["milk", "wheat"],
+      "confidence": "medium"
+    },
+    {
+      "name": "麦旋风",
+      "aliases": ["mcflurry", "奥利奥麦旋风", "麦旋风奥利奥"],
+      "category": "甜品",
+      "allergens": ["milk", "wheat", "soy"],
+      "may_contain": ["peanut", "tree_nut", "egg"],
+      "removable": {},
+      "cross_contact": ["milk", "wheat", "soy", "peanut", "tree_nut"],
+      "confidence": "medium",
+      "notes": "奥利奥碎含小麦与大豆；奶昔含乳；坚果类麦旋风需特别留意。"
+    },
+    {
+      "name": "新地",
+      "aliases": ["sundae", "圣代", "热巧克力新地", "草莓新地"],
+      "category": "甜品",
+      "allergens": ["milk"],
+      "may_contain": ["soy", "wheat", "peanut", "tree_nut"],
+      "removable": {},
+      "cross_contact": ["milk", "wheat", "soy"],
+      "confidence": "medium"
+    },
+    {
+      "name": "鲜奶",
+      "aliases": ["milk", "牛奶"],
+      "category": "饮品",
+      "allergens": ["milk"],
+      "may_contain": [],
+      "removable": {},
+      "cross_contact": ["milk"],
+      "confidence": "high"
+    },
+    {
+      "name": "拿铁",
+      "aliases": ["latte", "拿铁咖啡", "香草拿铁"],
+      "category": "饮品",
+      "allergens": ["milk"],
+      "may_contain": ["soy"],
+      "removable": { "milk": "改加植物奶（需确认门店是否供应）" },
+      "cross_contact": ["milk", "soy"],
+      "confidence": "medium"
+    },
+    {
+      "name": "美式咖啡",
+      "aliases": ["americano", "黑咖啡", "鲜煮咖啡"],
+      "category": "饮品",
+      "allergens": [],
+      "may_contain": [],
+      "removable": {},
+      "cross_contact": [],
+      "confidence": "medium",
+      "notes": "不加奶不加糖时无主要过敏原；需明确要求不加奶。"
+    },
+    {
+      "name": "可口可乐",
+      "aliases": ["coca cola", "可乐", "汽水"],
+      "category": "饮品",
+      "allergens": [],
+      "may_contain": [],
+      "removable": {},
+      "cross_contact": [],
+      "confidence": "high"
+    },
+    {
+      "name": "雪碧",
+      "aliases": ["sprite", "柠檬汽水"],
+      "category": "饮品",
+      "allergens": [],
+      "may_contain": [],
+      "removable": {},
+      "cross_contact": [],
+      "confidence": "high"
+    },
+    {
+      "name": "珍珠奶茶",
+      "aliases": ["milk tea", "波霸奶茶", "奶茶"],
+      "category": "饮品",
+      "allergens": ["milk"],
+      "may_contain": ["soy", "wheat"],
+      "removable": { "milk": "要求不加奶/不加奶盖（需门店确认）" },
+      "cross_contact": ["milk", "soy"],
+      "confidence": "medium"
+    },
+    {
+      "name": "麦乐鸡块儿童餐",
+      "aliases": ["开心乐园餐", "开心乐园鸡块餐", "儿童餐"],
+      "category": "套餐",
+      "allergens": ["wheat", "milk", "egg", "soy"],
+      "may_contain": ["peanut", "tree_nut"],
+      "removable": { "milk": "换无乳饮料", "wheat": "换苹果块等水果替身（视门店）" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "low",
+      "notes": "儿童餐含玩具与特定搭配，部分门店可换品。"
+    },
+    {
+      "name": "麦辣鸡腿汉堡套餐",
+      "aliases": ["麦辣鸡腿堡套餐", "mcchicken meal"],
+      "category": "套餐",
+      "allergens": ["wheat", "egg", "soy"],
+      "may_contain": ["milk", "peanut", "tree_nut"],
+      "removable": { "egg": "去沙拉酱", "wheat": "去面包" },
+      "cross_contact": ["wheat", "milk", "egg"],
+      "confidence": "medium"
+    }
+  ],
+  "sauces": [
+    { "name": "甜辣酱", "aliases": ["甜辣酱", "甜酸酱", "糖醋酱"], "allergens": ["soy"], "may_contain": ["wheat"], "notes": "常见于麦乐鸡与鸡翅；中国区甜酸酱与甜辣酱为同系" },
+    { "name": "烧烤酱", "aliases": ["烧烤酱", "BBQ酱"], "allergens": ["soy"], "may_contain": ["wheat", "mustard"], "notes": "BBQ 酱常含大豆与小麦" },
+    { "name": "沙拉酱", "aliases": ["沙拉酱", "蛋黄酱"], "allergens": ["egg", "soy"], "may_contain": ["milk"], "notes": "普通沙拉酱含蛋" },
+    { "name": "千岛酱", "aliases": ["千岛酱", "岛酱"], "allergens": ["egg", "soy"], "may_contain": ["milk"], "notes": "巨无霸等汉堡常用" },
+    { "name": "巨无霸酱", "aliases": ["巨无霸酱"], "allergens": ["egg", "soy"], "may_contain": ["milk", "mustard"] },
+    { "name": "芥末酱", "aliases": ["芥末酱"], "allergens": ["mustard", "soy"], "may_contain": ["wheat"] },
+    { "name": "番茄酱", "aliases": ["番茄酱", "茄汁酱"], "allergens": [], "may_contain": [], "notes": "通常无主要过敏原" },
+    { "name": "奶油", "aliases": ["奶油", "奶昔顶"], "allergens": ["milk"], "may_contain": [] },
+    { "name": "麦旋风奶昔", "aliases": ["麦旋风奶昔", "奶昔"], "allergens": ["milk"], "may_contain": ["soy"] },
+    { "name": "辣椒黄油风味酱", "aliases": ["辣椒黄油风味酱", "黄油风味酱"], "allergens": ["milk"], "may_contain": ["wheat", "soy"], "notes": "2026 龙焰系列新品酱料，含乳制品" },
+    { "name": "芝士酱", "aliases": ["芝士酱", "奶酪酱"], "allergens": ["milk"], "may_contain": ["wheat"], "notes": "含乳制品" },
+    { "name": "巧克力酱", "aliases": ["巧克力酱", "朱古力酱"], "allergens": ["milk", "soy"], "may_contain": ["wheat"], "notes": "含乳与大豆" }
+  ]
+}

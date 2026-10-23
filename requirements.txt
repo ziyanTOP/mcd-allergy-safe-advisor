@@ -1,0 +1,7 @@
+# 本项目的核心引擎零第三方依赖，仅用 Python 3.10+ 标准库即可运行。
+#
+# 安装官方 MCP SDK 后会自动改用 SDK 通道（更稳、更好的会话管理）；
+# 未安装时脚本会回退到内置的 Streamable HTTP JSON-RPC 实现。
+#
+# pip install -r requirements.txt
+mcp>=1.2.0

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 本地凭据——绝不能提交
+.env
+*.token
+config.json
+mcp-config.json
+mcp.json
+
+# 运行产物
+.cache/
+*.log
+examples/*.tmp
+
+# 编辑器
+.DS_Store
+.idea/
+.vscode/

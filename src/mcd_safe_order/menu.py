@@ -49,6 +49,7 @@ class MenuItem:
     price: str = ""
     original_price: str = ""
     rounds: list[dict[str, Any]] = field(default_factory=list)
+    choice_codes: list[str] = field(default_factory=list)
     required_components: list[str] = field(default_factory=list)
     removable_components: list[str] = field(default_factory=list)
     optional_components: list[str] = field(default_factory=list)
@@ -75,6 +76,7 @@ class MenuItem:
             "components": self.components,
             "removable": list(self.removable),
             "support_modify": self.support_modify,
+            "choice_codes": list(self.choice_codes),
             "is_selector": self.is_selector,
             "rounds": self.rounds,
             "image": self.image,
@@ -151,6 +153,7 @@ def parse_meal_detail(payload: Any) -> dict[str, Any]:
     removable_components: list[str] = []
     optional: list[str] = []
     removable: list[str] = []
+    choice_codes: list[str] = []
 
     for rnd in rounds:
         if not isinstance(rnd, dict):
@@ -167,6 +170,9 @@ def parse_meal_detail(payload: Any) -> dict[str, Any]:
             cname = str(choice.get("name") or "")
             if not cname:
                 continue
+            ccode = str(choice.get("code") or "").strip()
+            if ccode:
+                choice_codes.append(ccode)
             required.append(cname)
             if EXCLUDED_PATTERN.search(cname):
                 # 名称里已声明"不含酱"，说明默认已排除
@@ -201,6 +207,7 @@ def parse_meal_detail(payload: Any) -> dict[str, Any]:
     return {
         "name": str(data.get("name") or ""),
         "rounds": rounds,
+        "choice_codes": choice_codes,
         "required_components": required,
         "removable_components": removable_components,
         "optional_components": optional,

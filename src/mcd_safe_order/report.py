@@ -87,6 +87,20 @@ def render_markdown(plan: dict[str, Any]) -> str:
                 lines.append(f"- 交叉接触：{_fmt_hits(a['cross_contact'])}")
             lines.append("")
 
+    pending = plan.get("pending_knowledge") or []
+    if pending:
+        lines.append("## 📌 知识库待补充（新品自动入队）")
+        lines.append("")
+        lines.append("以下成分在知识库中没有收录，无法确认过敏原，"
+                     "相关餐品已自动降级为「需确认」而不是判为安全：")
+        lines.append("")
+        for row in pending[:15]:
+            lines.append(f"- `{row['component']}`（被 {row['count']} 个餐品引用）")
+        lines.append("")
+        lines.append("补录方式：编辑 `data/allergen_matrix.json` 的 `items` / `sauces`，"
+                     "或重新运行 `scripts/build_ground_truth.py` 刷新实测底库。")
+        lines.append("")
+
     lines.append("## 到店话术")
     lines.append("")
     lines.append("> 我对<u>花生</u>过敏（严重程度：过敏性休克级）。请确认这个餐品全程没有接触花生、"
@@ -120,6 +134,12 @@ def render_text(plan: dict[str, Any]) -> str:
     if plan.get("combo_note"):
         out.append("")
         out.append(f"  ⚠️ {plan['combo_note']}")
+    pending = plan.get("pending_knowledge") or []
+    if pending:
+        out.append("")
+        out.append(f"[知识库待补充 {len(pending)} 项]（相关餐品已降级为需确认）")
+        for row in pending[:10]:
+            out.append(f"  · {row['component']}  被 {row['count']} 个餐品引用")
     out.append("")
     out.append("[需确认/不建议]")
     for a in plan.get("review", []):

@@ -25,7 +25,7 @@ BE_CODE_KEYS = ("beCode", "be_code")
 STORE_NAME_KEYS = ("storeName", "store_name", "shopName", "name", "restaurantName")
 ADDRESS_KEYS = ("address", "addr", "addressDetail", "detailAddress")
 
-CACHE_VERSION = "v3"  # 解析结构变更时递增，自动隔离旧缓存
+CACHE_VERSION = "v4"  # 解析结构变更时递增，自动隔离旧缓存
 
 DEFAULT_CACHE_DIR = Path(
     os.environ.get(
@@ -185,12 +185,44 @@ class McDonaldAdvisor:
                 if detail:
                     item.name = detail.get("name") or item.name
                     item.rounds = detail.get("rounds") or []
+                    item.choice_codes = detail.get("choice_codes") or []
                     item.required_components = detail.get("required_components") or []
                     item.removable_components = detail.get("removable_components") or []
                     item.optional_components = detail.get("optional_components") or []
                     item.removable = detail.get("removable") or []
                     item.support_modify = detail.get("support_modify", False)
                     item.image = detail.get("image") or ""
+
+            # 套餐子项经常引用"未在分类里单列"的餐品（编码可拿到），
+            # 顺着 code 再拉一次 detail，把它们纳入同一张菜单参与解析。
+            main_codes = {it.code for it in items}
+            referenced: list[str] = []
+            for it in items:
+                for code in it.choice_codes:
+                    if code and code not in main_codes and code not in referenced:
+                        referenced.append(code)
+
+            for code in referenced:
+                if detail_limit is not None and len(items) >= detail_limit:
+                    break
+                detail = self._detail_for(code, store_code, order_type, be_type, be_code)
+                if not detail or not detail.get("name"):
+                    continue
+                items.append(
+                    MenuItem(
+                        code=code,
+                        name=detail.get("name", ""),
+                        category="套餐子项",
+                        rounds=detail.get("rounds") or [],
+                        choice_codes=detail.get("choice_codes") or [],
+                        required_components=detail.get("required_components") or [],
+                        removable_components=detail.get("removable_components") or [],
+                        optional_components=detail.get("optional_components") or [],
+                        removable=detail.get("removable") or [],
+                        support_modify=detail.get("support_modify", False),
+                        image=detail.get("image") or "",
+                    )
+                )
 
         result = [it.to_dict() for it in items]
         for it in result:

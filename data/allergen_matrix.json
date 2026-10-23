@@ -17,7 +17,7 @@
   },
   "allergens": [
     { "key": "wheat", "label": "小麦/麸质", "keywords": ["小麦", "麸质", "面筋", "谷物", "wheat", "gluten"] },
-    { "key": "milk", "label": "乳制品/牛奶", "keywords": ["牛奶", "乳", "奶酪", "芝士", "黄油", "奶油", "奶", "milk", "dairy", "cheese"] },
+    { "key": "milk", "label": "乳制品/牛奶", "keywords": ["牛奶", "乳", "奶酪", "干酪", "芝士", "黄油", "奶油", "奶", "milk", "dairy", "cheese"] },
     { "key": "egg", "label": "蛋", "keywords": ["蛋", "egg"] },
     { "key": "soy", "label": "大豆", "keywords": ["大豆", "黄豆", "豆", "soy", "soya"] },
     { "key": "peanut", "label": "花生", "keywords": ["花生", "peanut"] },
@@ -366,6 +366,8 @@
     { "name": "麦旋风奶昔", "aliases": ["麦旋风奶昔", "奶昔"], "allergens": ["milk"], "may_contain": ["soy"] },
     { "name": "辣椒黄油风味酱", "aliases": ["辣椒黄油风味酱", "黄油风味酱"], "allergens": ["milk"], "may_contain": ["wheat", "soy"], "notes": "2026 龙焰系列新品酱料，含乳制品" },
     { "name": "芝士酱", "aliases": ["芝士酱", "奶酪酱"], "allergens": ["milk"], "may_contain": ["wheat"], "notes": "含乳制品" },
-    { "name": "巧克力酱", "aliases": ["巧克力酱", "朱古力酱"], "allergens": ["milk", "soy"], "may_contain": ["wheat"], "notes": "含乳与大豆" }
+    { "name": "巧克力酱", "aliases": ["巧克力酱", "朱古力酱"], "allergens": ["milk", "soy"], "may_contain": ["wheat"], "notes": "含乳与大豆" },
+    { "name": "烤牛肉风味酱", "aliases": ["烤牛肉风味酱", "烤牛肉酱"], "allergens": ["soy"], "may_contain": ["wheat", "milk", "mustard"], "confidence": "low", "notes": "2026 龙焰系列新品酱料，由待补充队列收录；含大豆，可能含小麦与乳，需到店核实" },
+    { "name": "烤味酱", "aliases": ["烤味酱"], "allergens": ["soy"], "may_contain": ["wheat"], "confidence": "low", "notes": "2026 新品酱料，由待补充队列收录；含大豆，可能含小麦，需到店核实" }
   ]
 }

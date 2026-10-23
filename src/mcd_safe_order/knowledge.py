@@ -132,6 +132,7 @@ class Assessment:
     reasons: list[str] = field(default_factory=list)
     removable_actions: list[str] = field(default_factory=list)
     optional_additives: list[str] = field(default_factory=list)
+    unresolved_components: list[str] = field(default_factory=list)
     is_selector: bool = False
     confidence: str = "unknown"
     data_source: str = "matrix"
@@ -152,6 +153,7 @@ class Assessment:
             "reasons": self.reasons,
             "removable_actions": list(self.removable_actions),
             "optional_additives": list(self.optional_additives),
+            "unresolved_components": list(self.unresolved_components),
             "is_selector": self.is_selector,
             "confidence": self.confidence,
             "data_source": self.data_source,
@@ -314,6 +316,128 @@ def _iter_texts(item: dict[str, Any]) -> Iterable[str]:
                             yield v2
 
 
+# 套餐里的占位子项（"选择套餐内小食""选择蘸酱"），不是具体成分
+PLACEHOLDER_COMPONENT_PATTERNS = ("选择", "任选", "任意", "自选", "套餐内", "主食", "随心", "小食", "饮品", "汉堡")
+
+# 冰量/温度等制作选项，同样不是过敏原成分
+PREP_OPTION_PATTERNS = ("去冰", "多冰", "少冰", "加冰", "标准", "常温", "去热", "加热", "粉区", "蓝区", "绿区")
+
+# 已知不含主要过敏原的基础成分（解析为"安全"，而不是"未知"）
+KNOWN_SAFE_COMPONENTS = (
+    "生菜", "切块生菜", "番茄片", "番茄", "洋葱", "洋葱粒", "酸黄瓜", "黄瓜",
+    "玉米", "苹果", "苹果片", "柠檬", "柠檬片", "盐", "食盐", "糖", "白砂糖",
+    "冰", "冰块", "水", "咖啡豆", "浓缩咖啡液", "黑胡椒", "椒盐", "辣椒粉",
+    "棕榈油", "玉米油", "起酥油", "麦芽糊精", "培根",
+)
+
+
+def is_placeholder_component(name: str) -> bool:
+    """判断是否为"选品占位"或"制作选项"而非具体成分。"""
+    n = normalize(name)
+    if not n:
+        return True
+    if any(normalize(p) in n for p in PREP_OPTION_PATTERNS):
+        return True
+    return any(normalize(p) in n for p in PLACEHOLDER_COMPONENT_PATTERNS)
+
+
+def is_known_safe_component(name: str, kb: "KnowledgeBase") -> bool:
+    """判断是否为已知不含主要过敏原的基础成分。"""
+    n = normalize(name)
+    if not n:
+        return False
+    for safe in KNOWN_SAFE_COMPONENTS:
+        if normalize(safe) == n or normalize(safe) in n:
+            return True
+    return False
+
+
+def resolve_menu_components(
+    items: Sequence[dict[str, Any]],
+    kb: KnowledgeBase,
+    max_passes: int = 4,
+) -> tuple[dict[str, dict[str, set[str]]], dict[str, list[str]]]:
+    """在**整张菜单范围内**解析成分的过敏原。
+
+    麦当劳 MCP 的套餐子项经常直接引用另一个在售餐品（"小杯玉米杯"、
+    "麦咖啡™冰美式中杯"…），这些子项本身在同一家门店的菜单里。
+    因此解析顺序是：
+        1. 知识库（餐品表 / 酱料表）
+        2. 同门店菜单里的其他餐品（递归，套餐→子餐品→孙餐品）
+        3. 关键词兜底
+        4. 仍无法判定 → 记入"待补充"，该餐品不得判为安心
+
+    返回 (resolved, unresolved)：
+        resolved[name] = {"allergens": set, "may_contain": set}
+        unresolved[name] = [无法判定的成分名]
+    """
+    by_name: dict[str, dict[str, Any]] = {}
+    normalized_index: dict[str, str] = {}
+    for it in items:
+        name = str(it.get("name") or "")
+        if name:
+            by_name.setdefault(name, it)
+            normalized_index.setdefault(normalize(name), name)
+
+    resolved: dict[str, dict[str, set[str]]] = {
+        name: {"allergens": set(), "may_contain": set()} for name in by_name
+    }
+    unresolved: dict[str, list[str]] = {}
+
+    def _components(item: dict[str, Any]) -> list[str]:
+        comps = [str(c) for c in (item.get("required_components") or [])]
+        comps += [str(c) for c in (item.get("removable_components") or [])]
+        comps += [str(c) for c in (item.get("optional_components") or [])]
+        if not comps:
+            comps = [str(c) for c in (item.get("components") or [])]
+        return comps
+
+    for _ in range(max_passes):
+        changed = False
+        for name, item in by_name.items():
+            bucket = resolved[name]
+            local_unresolved: list[str] = []
+            for comp in _components(item):
+                if is_placeholder_component(comp):
+                    continue
+                entry = kb.lookup_component(comp)
+                if entry:
+                    # 知识库命中：解析成功（结果可能是空集，如可乐）
+                    new_all = set(entry.get("allergens", []))
+                    new_may = set(entry.get("may_contain", []))
+                elif is_known_safe_component(comp, kb):
+                    # 已知不含主要过敏原的基础成分：解析成功且结果为空
+                    new_all = set()
+                    new_may = set()
+                elif normalize(comp) in normalized_index:
+                    # 引用同菜单的另一个餐品 → 用它的判定结果
+                    child_name = normalized_index[normalize(comp)]
+                    child = resolved.get(child_name, {"allergens": set(), "may_contain": set()})
+                    new_all = set(child["allergens"])
+                    new_may = set(child["may_contain"])
+                    if unresolved.get(child_name):
+                        # 子餐品自身存在未解析成分 → 父同样不能判为安心
+                        local_unresolved.extend(unresolved[child_name])
+                        continue
+                else:
+                    new_all = kb.parse_allergen_keywords(comp)
+                    new_may = set()
+                    if not new_all:
+                        # 确实无法判定 → 记入待补充
+                        local_unresolved.append(comp)
+                        continue
+                if not new_all <= bucket["allergens"] or not new_may <= bucket["may_contain"]:
+                    changed = True
+                bucket["allergens"] |= new_all
+                bucket["may_contain"] |= new_may
+            if set(local_unresolved) != set(unresolved.get(name, [])):
+                changed = True
+            unresolved[name] = sorted(set(local_unresolved))
+        if not changed:
+            break
+    return resolved, unresolved
+
+
 def _soft_action(soft_names: list[str], key: str, kb: KnowledgeBase) -> str:
     """给"可去除配料"找一个对应的去险动作描述。"""
     for name in soft_names:
@@ -353,6 +477,9 @@ def assess_item(
     item: dict[str, Any],
     profile: AllergenProfile,
     kb: KnowledgeBase,
+    menu_allergens: set[str] | None = None,
+    menu_may_contain: set[str] | None = None,
+    unresolved: list[str] | None = None,
 ) -> Assessment:
     """对单个餐品做过敏原风险分级。"""
     name = str(item.get("name") or item.get("item_name") or item.get("meal_name") or "未知餐品")
@@ -421,7 +548,24 @@ def assess_item(
         sources.add("knowledge_base")
     data_source = "+".join(sorted(sources)) or "none"
 
-    allergen_union = live_allergens | comp_allergens | matrix_allergens
+    # 菜单级解析结果（同门店子餐品的过敏原也会并进来）
+    menu_allergens = set(menu_allergens or set())
+    menu_may_contain = set(menu_may_contain or set())
+    if unresolved is None:
+        # 独立调用时的兜底：自行识别无法判定的成分
+        unresolved = []
+        for comp in required + soft + optional:
+            if is_placeholder_component(comp):
+                continue
+            if kb.lookup_component(comp) or is_known_safe_component(comp, kb):
+                continue
+            if kb.parse_allergen_keywords(comp):
+                continue
+            unresolved.append(comp)
+    else:
+        unresolved = list(unresolved)
+
+    allergen_union = live_allergens | comp_allergens | matrix_allergens | menu_allergens
     soft_union = soft_allergens
 
     hits: list[Hit] = []
@@ -461,7 +605,7 @@ def assess_item(
     observed_user = user_allergens & observed_hits
 
     may_contain: list[Hit] = []
-    for key in sorted(user_allergens & (matrix_may_contain | comp_may_contain)):
+    for key in sorted(user_allergens & (matrix_may_contain | comp_may_contain | menu_may_contain)):
         may_contain.append(
             Hit(
                 allergen=key,
@@ -497,6 +641,11 @@ def assess_item(
             )
         )
 
+    if unresolved:
+        reasons.append(
+            "含知识库未收录成分：" + "、".join(unresolved[:4])
+            + ("等" if len(unresolved) > 4 else "") + "，无法确认过敏原"
+        )
     if hits:
         hard_labels = [h.label for h in hits if h.allergen in allergen_union]
         soft_labels = [h.label for h in hits if h.allergen not in allergen_union]
@@ -547,6 +696,9 @@ def assess_item(
         risk = RISK_UNSAFE
     elif may_contain or cross_contact:
         risk = RISK_CAUTION
+    elif unresolved:
+        # 成分未知时不能判为安心——保守降级
+        risk = RISK_CAUTION
     else:
         risk = RISK_SAFE
 
@@ -563,10 +715,25 @@ def assess_item(
         reasons=reasons,
         removable_actions=live_actions,
         optional_additives=optional_names,
+        unresolved_components=unresolved,
         is_selector=is_selector,
         confidence=str(matrix.get("confidence", "unknown")) if matrix else "unknown",
         data_source=data_source,
     )
+
+
+def _pending_knowledge(unresolved_map: dict[str, list[str]]) -> list[dict[str, Any]]:
+    """汇总"知识库待补充"清单——新品自动进入这里，等待人工补录。"""
+    table: dict[str, list[str]] = {}
+    for item_name, comps in unresolved_map.items():
+        for comp in comps:
+            table.setdefault(comp, [])
+            if item_name not in table[comp]:
+                table[comp].append(item_name)
+    return [
+        {"component": comp, "used_by": sorted(items), "count": len(items)}
+        for comp, items in sorted(table.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+    ]
 
 
 def build_order_plan(
@@ -575,7 +742,23 @@ def build_order_plan(
     kb: KnowledgeBase,
 ) -> dict[str, Any]:
     """对整单做分级，并给出可执行建议。"""
-    assessments = [assess_item(it, profile, kb) for it in items]
+    # 菜单级解析：套餐引用的子餐品，其过敏原并入父餐品
+    menu_resolved, menu_unresolved = resolve_menu_components(items, kb)
+
+    assessments = []
+    for it in items:
+        name = str(it.get("name") or "")
+        r = menu_resolved.get(name, {"allergens": set(), "may_contain": set()})
+        assessments.append(
+            assess_item(
+                it,
+                profile,
+                kb,
+                menu_allergens=r["allergens"],
+                menu_may_contain=r["may_contain"],
+                unresolved=menu_unresolved.get(name, []),
+            )
+        )
     assessments.sort(key=lambda a: (RISK_ORDER[a.risk], a.category, a.item))
 
     selectors = [a for a in assessments if a.is_selector]
@@ -613,6 +796,7 @@ def build_order_plan(
             "selectors": len(selectors),
         },
         "selectors": [a.to_dict() for a in selectors],
+        "pending_knowledge": _pending_knowledge(menu_unresolved),
         "recommend": [a.to_dict() for a in safe + conditional],
         "review": [a.to_dict() for a in caution + unsafe],
         "combo_note": combo_note,

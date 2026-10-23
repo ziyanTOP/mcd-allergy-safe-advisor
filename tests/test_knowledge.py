@@ -324,6 +324,49 @@ class TestObservedVocabulary(unittest.TestCase):
         self.assertFalse([h for h in a.may_contain if h.source == "mcp_observed"])
 
 
+class TestNewItemHandling(unittest.TestCase):
+    """麦当劳上新餐品时的处理逻辑。"""
+
+    def test_unknown_component_prevents_safe_rating(self):
+        # 新品含未知成分 → 不得判为安心
+        a = assess_item(
+            {"name": "龙焰新堡", "required_components": ["全新秘制酱料"]},
+            AllergenProfile(allergens=["乳制品"]),
+            KB,
+        )
+        self.assertEqual(a.risk, RISK_CAUTION)
+        self.assertTrue(any("未收录" in r for r in a.reasons))
+
+    def test_combo_inherits_child_item_allergens(self):
+        # 套餐引用同菜单的子餐品 → 子餐品的过敏原并入套餐
+        menu = [
+            {"name": "芝士厚牛堡", "required_components": ["高达干酪片"]},
+            {"name": "超值双享套餐", "required_components": ["芝士厚牛堡", "中薯条"]},
+        ]
+        plan = build_order_plan(menu, AllergenProfile(allergens=["乳制品"]), KB)
+        combo = next(a for a in plan["assessments"] if a["item"] == "超值双享套餐")
+        self.assertEqual(combo["risk"], RISK_UNSAFE)
+
+    def test_known_safe_component_is_not_unresolved(self):
+        menu = [{"name": "蔬菜卷", "required_components": ["切块生菜", "番茄片"]}]
+        plan = build_order_plan(menu, AllergenProfile(allergens=["乳制品"]), KB)
+        item = plan["assessments"][0]
+        self.assertEqual(item["risk"], RISK_SAFE)
+        self.assertEqual(item["unresolved_components"], [])
+
+    def test_prep_options_are_not_components(self):
+        menu = [{"name": "冰美式", "optional_components": ["去冰", "多冰", "标准"]}]
+        plan = build_order_plan(menu, AllergenProfile(allergens=["乳制品"]), KB)
+        item = plan["assessments"][0]
+        self.assertEqual(item["unresolved_components"], [])
+
+    def test_pending_knowledge_queue_is_built(self):
+        menu = [{"name": "新品", "required_components": ["神秘新酱料"]}]
+        plan = build_order_plan(menu, AllergenProfile(allergens=["乳制品"]), KB)
+        pending = plan["pending_knowledge"]
+        self.assertTrue(any(r["component"] == "神秘新酱料" for r in pending))
+
+
 class TestEndToEndOnRealMenu(unittest.TestCase):
     """用真实门店菜单跑完整分级。"""
 

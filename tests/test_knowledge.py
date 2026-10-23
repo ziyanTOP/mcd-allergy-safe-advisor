@@ -367,6 +367,67 @@ class TestNewItemHandling(unittest.TestCase):
         self.assertTrue(any(r["component"] == "神秘新酱料" for r in pending))
 
 
+class TestMenuRealityCheck(unittest.TestCase):
+    """菜单真实性：建议必须建立在 MCP 此刻实际返回的内容上。"""
+
+    def test_only_live_menu_items_are_graded(self):
+        # 静态库里有但菜单里没有的条目，不得出现在建议里
+        plan = build_order_plan(
+            [{"name": "可乐", "category": "饮品"}],
+            AllergenProfile(allergens=["乳制品"]),
+            KB,
+        )
+        names = [a["item"] for a in plan["recommend"] + plan["review"]]
+        self.assertEqual(names, ["可乐"])
+        self.assertNotIn("巨无霸", names)
+
+    def test_time_limited_items_are_flagged(self):
+        plan = build_order_plan(
+            [{"name": "心形薯饼8块", "tags": ["限时特惠", "上新"]}],
+            AllergenProfile(allergens=["乳制品"]),
+            KB,
+        )
+        self.assertTrue(plan["time_limited"])
+        self.assertEqual(plan["time_limited"][0]["item"], "心形薯饼8块")
+
+    def test_non_food_items_excluded_from_recommendations(self):
+        plan = build_order_plan(
+            [
+                {"name": "“葱不求人“按摩捶痒痒挠", "tags": ["上新"]},
+                {"name": "海绵宝宝×航海王系列玩具"},
+                {"name": "可乐"},
+            ],
+            AllergenProfile(allergens=["乳制品"]),
+            KB,
+        )
+        rec = [a["item"] for a in plan["recommend"]]
+        self.assertNotIn("“葱不求人“按摩捶痒痒挠", rec)
+        self.assertNotIn("海绵宝宝×航海王系列玩具", rec)
+        self.assertIn("可乐", rec)
+        self.assertEqual(len(plan["non_food"]), 2)
+
+    def test_knowledge_coverage_reports_off_shelf_items(self):
+        plan = build_order_plan(
+            [{"name": "可乐"}],
+            AllergenProfile(allergens=["乳制品"]),
+            KB,
+        )
+        cov = plan["knowledge_coverage"]
+        self.assertEqual(cov["knowledge_total"], len(KB.items))
+        self.assertLess(cov["in_menu"], cov["knowledge_total"])
+        self.assertIn("巨无霸", cov["not_in_menu_names"])
+
+    def test_provenance_is_recorded(self):
+        plan = build_order_plan(
+            [{"name": "可乐"}],
+            AllergenProfile(allergens=["乳制品"]),
+            KB,
+            menu_provenance={"source": "mcd_mcp", "store_code": "123", "menu_item_count": 1},
+        )
+        self.assertEqual(plan["menu_provenance"]["source"], "mcd_mcp")
+        self.assertEqual(plan["menu_provenance"]["store_code"], "123")
+
+
 class TestEndToEndOnRealMenu(unittest.TestCase):
     """用真实门店菜单跑完整分级。"""
 

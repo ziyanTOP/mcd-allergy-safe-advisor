@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,8 @@ from .knowledge import AllergenProfile, KnowledgeBase, build_order_plan
 from .mcp_client import McdMcpClient
 from .menu import (
     MenuItem,
+    is_non_food,
+    is_time_limited,
     looks_like_selector,
     nutrition_index,
     parse_meal_detail,
@@ -230,6 +233,8 @@ class McDonaldAdvisor:
             if matrix and not it.get("category"):
                 it["category"] = matrix.get("category", "")
             it["is_selector"] = looks_like_selector(it.get("name", ""))
+            it["is_non_food"] = is_non_food(it.get("name", ""))
+            it["time_limited"] = is_time_limited(it.get("tags", []))
         return result
 
     def _detail_for(
@@ -323,7 +328,19 @@ class McDonaldAdvisor:
                 }
             enriched.append(row)
 
-        plan = build_order_plan(enriched, profile, self.kb)
+        plan = build_order_plan(
+            enriched,
+            profile,
+            self.kb,
+            menu_provenance={
+                "source": "mcd_mcp",
+                "tool": "query-meals + query-meal-detail",
+                "store_code": store_code,
+                "sampled_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+                "menu_item_count": len(items),
+                "note": "本方案只覆盖该门店此刻在售的餐品；静态知识库仅提供过敏原语义，不提供可点菜品。",
+            },
+        )
         plan["store_code"] = store_code
         plan["menu_count"] = len(items)
         plan["nutrition_merged"] = len(nutrition)

@@ -134,6 +134,10 @@ class Assessment:
     optional_additives: list[str] = field(default_factory=list)
     unresolved_components: list[str] = field(default_factory=list)
     is_selector: bool = False
+    is_non_food: bool = False
+    time_limited: bool = False
+    tags: list[str] = field(default_factory=list)
+    category_label: str = ""
     confidence: str = "unknown"
     data_source: str = "matrix"
 
@@ -155,6 +159,10 @@ class Assessment:
             "optional_additives": list(self.optional_additives),
             "unresolved_components": list(self.unresolved_components),
             "is_selector": self.is_selector,
+            "is_non_food": self.is_non_food,
+            "time_limited": self.time_limited,
+            "tags": list(self.tags),
+            "category_label": self.category_label,
             "confidence": self.confidence,
             "data_source": self.data_source,
         }
@@ -438,6 +446,20 @@ def resolve_menu_components(
     return resolved, unresolved
 
 
+def is_non_food_name(name: str) -> bool:
+    """是否为玩具/周边等非食品项。"""
+    from .menu import is_non_food
+
+    return is_non_food(name)
+
+
+def is_time_limited_tags(tags: Sequence[str]) -> bool:
+    """是否带限时/限定标签（结论有时效性）。"""
+    from .menu import is_time_limited
+
+    return is_time_limited(tags)
+
+
 def _soft_action(soft_names: list[str], key: str, kb: KnowledgeBase) -> str:
     """给"可去除配料"找一个对应的去险动作描述。"""
     for name in soft_names:
@@ -498,6 +520,8 @@ def assess_item(
         required = [str(c) for c in (item.get("components") or [])]
     live_actions = [str(a) for a in (item.get("removable") or [])]
     is_selector = bool(item.get("is_selector"))
+    is_non_food = bool(item.get("is_non_food")) or is_non_food_name(name)
+    time_limited = bool(item.get("time_limited")) or is_time_limited_tags(live_tags)
 
     # 第一层：名称 / 标签 / 必含成分里的过敏原关键词
     live_text = " ".join([name] + live_tags + required)
@@ -717,6 +741,10 @@ def assess_item(
         optional_additives=optional_names,
         unresolved_components=unresolved,
         is_selector=is_selector,
+        is_non_food=is_non_food,
+        time_limited=time_limited,
+        tags=live_tags,
+        category_label=category,
         confidence=str(matrix.get("confidence", "unknown")) if matrix else "unknown",
         data_source=data_source,
     )
@@ -736,12 +764,43 @@ def _pending_knowledge(unresolved_map: dict[str, list[str]]) -> list[dict[str, A
     ]
 
 
+def _knowledge_coverage(
+    items: Sequence[dict[str, Any]],
+    kb: KnowledgeBase,
+) -> dict[str, Any]:
+    """知识库条目在本次实时菜单中的在售情况。
+
+    静态知识库可能包含已下架或区域性停售的餐品，
+    这里给出对照，避免用户照着旧清单去买不到。
+    """
+    live_names = {str(it.get("name") or "") for it in items}
+    in_menu: list[str] = []
+    absent: list[str] = []
+    for entry in kb.items:
+        names = [entry.get("name", "")] + list(entry.get("aliases", []))
+        if any(n and n in live_names for n in names):
+            in_menu.append(entry.get("name", ""))
+        else:
+            absent.append(entry.get("name", ""))
+    return {
+        "knowledge_total": len(kb.items),
+        "in_menu": len(in_menu),
+        "not_in_menu": len(absent),
+        "not_in_menu_names": absent,
+    }
+
+
 def build_order_plan(
     items: Sequence[dict[str, Any]],
     profile: AllergenProfile,
     kb: KnowledgeBase,
+    menu_provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """对整单做分级，并给出可执行建议。"""
+    """对整单做分级，并给出可执行建议。
+
+    items 必须来自 MCP 的实时菜单返回——静态知识库只提供过敏原语义，
+    绝不作为可点餐品的来源。
+    """
     # 菜单级解析：套餐引用的子餐品，其过敏原并入父餐品
     menu_resolved, menu_unresolved = resolve_menu_components(items, kb)
 
@@ -762,7 +821,8 @@ def build_order_plan(
     assessments.sort(key=lambda a: (RISK_ORDER[a.risk], a.category, a.item))
 
     selectors = [a for a in assessments if a.is_selector]
-    real = [a for a in assessments if not a.is_selector]
+    non_food = [a for a in assessments if a.is_non_food]
+    real = [a for a in assessments if not a.is_selector and not a.is_non_food]
     safe = [a for a in real if a.risk == RISK_SAFE]
     conditional = [a for a in real if a.risk == RISK_CONDITIONAL]
     caution = [a for a in real if a.risk == RISK_CAUTION]
@@ -796,7 +856,11 @@ def build_order_plan(
             "selectors": len(selectors),
         },
         "selectors": [a.to_dict() for a in selectors],
+        "non_food": [a.to_dict() for a in non_food],
+        "time_limited": [a.to_dict() for a in real if a.time_limited],
         "pending_knowledge": _pending_knowledge(menu_unresolved),
+        "menu_provenance": dict(menu_provenance or {}),
+        "knowledge_coverage": _knowledge_coverage(items, kb),
         "recommend": [a.to_dict() for a in safe + conditional],
         "review": [a.to_dict() for a in caution + unsafe],
         "combo_note": combo_note,

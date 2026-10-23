@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Sequence
 
 # 套餐子项/配料里代表"酱料"的后缀，用于识别可去除的酱料
 SAUCE_HINTS = ("酱", "汁", "蘸", "调味")
@@ -31,6 +31,28 @@ EXCLUDED_PATTERN = re.compile(r"[（(]\s*(不含|不要|无)\s*[^）)]{0,6}[）)
 
 # 这些不是具体餐品，而是"让用户自己挑"的选品器/组合入口
 SELECTOR_PATTERNS = ("随心选", "随心配", "单品精选", "任选", "自选", "专区", "组合任选")
+
+# 限时/限定标签：这些餐品会随活动结束下架，结论有时效性
+TIME_LIMITED_TAG_PATTERNS = ("限时", "上新", "限定", "麦金卡", "新品", "尝鲜", "回归")
+
+# 非食品 / 周边：玩具、赠品、卡券等，不参与过敏原分级
+NON_FOOD_PATTERNS = (
+    "玩具", "玩偶", "捶", "挠", "钥匙扣", "徽章", "礼品卡", "周边",
+    "系列玩具", "手提袋", "背包", "卡包", "公仔", "拼图",
+)
+
+
+def is_time_limited(tags: Sequence[str]) -> bool:
+    """判断餐品是否带限时/限定标签（结论有时效性）。"""
+    return any(
+        any(p in str(tag) for p in TIME_LIMITED_TAG_PATTERNS) for tag in tags or []
+    )
+
+
+def is_non_food(name: str) -> bool:
+    """判断是否为玩具/周边等非食品项。"""
+    n = str(name or "")
+    return any(p in n for p in NON_FOOD_PATTERNS)
 
 
 def looks_like_selector(name: str) -> bool:

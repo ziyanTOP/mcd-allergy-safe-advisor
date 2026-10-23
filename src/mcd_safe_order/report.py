@@ -38,6 +38,39 @@ def render_markdown(plan: dict[str, Any]) -> str:
     _strict = "是" if _profile.get("strict") else "否"
     lines.append(f"过敏原：{_allergens} ｜ 忌口：{_avoid} ｜ 严格模式：{_strict}")
     lines.append("")
+
+    prov = plan.get("menu_provenance") or {}
+    if prov:
+        lines.append(
+            f"> 📍 **菜单来源**：麦当劳 MCP 实时返回（{prov.get('tool', '')}）"
+            f" ｜ 门店 {prov.get('store_code', '-')}"
+            f"｜ 采样时间 {prov.get('sampled_at', '-')}"
+            f"｜ 覆盖 {prov.get('menu_item_count', 0)} 个在售餐品"
+        )
+        lines.append(">")
+        lines.append(f"> {prov.get('note', '')}")
+        lines.append("")
+
+    limited = plan.get("time_limited") or []
+    if limited:
+        lines.append(
+            f"⏳ **时效性提示**：{len(limited)} 个餐品带「限时/上新/限定/麦金卡」标签，"
+            "可能随活动结束下架，建议尽早下单："
+        )
+        lines.append("")
+        for a in limited[:10]:
+            tags = "、".join(a.get("tags", [])[:3]) if a.get("tags") else "限时/上新"
+            lines.append(f"- {a['item']}（{tags}）")
+        lines.append("")
+
+    coverage = plan.get("knowledge_coverage") or {}
+    if coverage:
+        lines.append(
+            f"📚 **知识库在售对照**：知识库共 {coverage.get('knowledge_total', 0)} 条餐品，"
+            f"其中 {coverage.get('in_menu', 0)} 条在本店当前在售，"
+            f"{coverage.get('not_in_menu', 0)} 条本店未上架（已自动排除，不参与推荐）。"
+        )
+        lines.append("")
     lines.append(
         f"共评估 **{s.get('total', 0)}** 项："
         f"✅ 安心 {s.get('safe', 0)} ｜ 🟡 可去除后可选 {s.get('conditional', 0)} ｜ "
@@ -86,6 +119,14 @@ def render_markdown(plan: dict[str, Any]) -> str:
             if a.get("cross_contact"):
                 lines.append(f"- 交叉接触：{_fmt_hits(a['cross_contact'])}")
             lines.append("")
+
+    non_food = plan.get("non_food") or []
+    if non_food:
+        lines.append("## 🎁 非食品 / 周边（不参与过敏原分级）")
+        lines.append("")
+        for a in non_food[:8]:
+            lines.append(f"- {a['item']}（{a.get('category', '')}）")
+        lines.append("")
 
     pending = plan.get("pending_knowledge") or []
     if pending:

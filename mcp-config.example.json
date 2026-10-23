@@ -1,16 +1,13 @@
 {
   "mcpServers": {
-    "mcd": {
+    "mcd-mcp": {
       "type": "streamable-http",
       "url": "https://mcp.mcd.cn",
       "headers": {
         "Authorization": "Bearer ${MCD_MCP_TOKEN}"
       },
-      "env": {
-        "MCD_MCP_TOKEN": "<在此填入你的麦当劳 MCP Token，申请地址：https://open.mcd.cn/mcp>"
-      },
       "enabled": true,
-      "description": "麦当劳 MCP：菜单、营养、门店、价格、优惠券、积分与主题活动"
+      "description": "麦当劳中国 MCP Server：菜单/营养/门店/价格/优惠券/积分/点餐等业务工具"
     }
   }
 }
